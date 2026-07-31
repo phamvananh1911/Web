@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ÁNH</title>
+
+<!-- =====================================================================
+     📖 NGUYÊN LÝ HOẠT ĐỘNG CỦA TRANG NÀY (đọc trước khi chỉnh sửa)
+     =====================================================================
+     6 phần xếp dọc, mỗi phần là một <section> độc lập:
+
+       1. #hero    → Tiêu đề "PORTFOLIO" khổ lớn kiểu poster cũ,
+                     nền tối + khung TV cổ hiệu ứng glitch,
+                     tên bạn + chức danh, badge "REC", nút "Unmute"
+       2. #info    → 3 cột: (1) Giới thiệu + ảnh chân dung
+                            (2) Liên hệ, Học vấn, Công cụ
+                            (3) Kinh nghiệm (timeline), Sở thích
+       3. #videos  → 3 video công việc
+       4. #gallery → Lưới ảnh
+       5. #outro   → Lời cảm ơn + liên hệ, kết thúc trang
+
+     MÀU SẮC: toàn bộ nằm trong :root {...} đầu <style>. Đổi ở đây,
+     cả trang đổi theo — không cần sửa CSS ở chỗ khác.
+
+     HIỆU ỨNG "GIẤY CŨ / TRẦY XƯỚC": chữ tiêu đề dùng nhiều lớp
+     text-shadow lệch nhau + một lớp nhiễu hạt (SVG noise) phủ lên
+     toàn bộ hero bằng mix-blend-mode — không cần ảnh texture ngoài.
+
+     KHUNG TV GLITCH: là một khối <div class="tv-mock">, "màn hình"
+     bên trong dùng animation CSS đổi màu ngẫu nhiên mô phỏng nhiễu
+     sóng. Muốn thay bằng video/ảnh thật của bạn: xem ghi chú
+     "✏️ THAY THẾ" ngay trong khối .tv-mock bên dưới.
+
+     VIDEO NỀN (tuỳ chọn): nếu muốn hero có video thật thay vì nền
+     gradient, thêm thẻ <video> y như phần Video ở mục 3 — cấu trúc
+     giống hệt, chỉ đổi src.
+
+     Nút "Unmute" ở góc phải: mặc định trang không có video nền nên
+     nút này chỉ mang tính trang trí (giữ đúng không khí bản gốc).
+     Nếu bạn thêm video nền thật, nối nút này với video bằng script
+     ở cuối file (đã có sẵn đoạn code, chỉ cần bỏ comment).
+     ===================================================================== -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+  /* =====================================================================
+     ✏️ KHO MÀU — tông rừng tối + ánh đèn TV hoài cổ
+     ===================================================================== */
+  :root{
+    --bg: #0c130e;          /* nền chính, xanh rừng gần đen */
+    --bg-panel: #10190f;    /* nền các khối phụ */
+    --ink: #f1ead9;         /* chữ chính, màu giấy cũ */
+    --ink-dim: #a9ac9c;     /* chữ phụ / mô tả */
+    --moss: #5c7a52;        /* xanh rêu — điểm nhấn phụ */
+    --amber: #e7c467;       /* vàng đèn TV — điểm nhấn chính */
+    --rust: #c1613a;        /* cam gỉ sét — điểm nhấn phụ 2, dùng cho glitch */
+    --line: rgba(241,234,217,0.16);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg); color:var(--ink); font-family:'Space Grotesk', sans-serif; overflow-x:hidden;}
+  ::selection{background:var(--amber); color:#0c130e;}
+  a{color:inherit; text-decoration:none;}
+  img, video{display:block; max-width:100%;}
+  .eyebrow{font-family:'JetBrains Mono', monospace; font-size:0.7rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-dim);}
+  .amber-text{color:var(--amber);}
+
+  header{
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:22px 5vw; mix-blend-mode:difference;
+  }
+  .logo{font-family:'Anton', sans-serif; font-size:1.1rem;}
+  nav{display:flex; gap:26px;}
+  nav a{font-family:'JetBrains Mono', monospace; font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; opacity:0.85;}
+  nav a:hover{opacity:1;}
+
+  /* =====================================================================
+     PHẦN 1 — HERO: tiêu đề poster + khung TV glitch trang trí
+     ===================================================================== */
+  #hero{
+    min-height:100svh; position:relative; overflow:hidden;
+    display:flex; flex-direction:column; justify-content:space-between;
+    padding:110px 5vw 60px;
+  }
+  /* nền: vệt sáng mờ như đèn xuyên qua tán lá, không cần ảnh ngoài */
+  .hero-bg{
+    position:absolute; inset:-15%; z-index:0;
+    background:
+      radial-gradient(ellipse at 30% 15%, rgba(231,196,103,0.18), transparent 40%),
+      radial-gradient(circle at 75% 60%, var(--moss) 0%, transparent 45%),
+      radial-gradient(circle at 15% 85%, var(--rust) 0%, transparent 35%);
+    filter:blur(90px) saturate(1.2);
+    opacity:0.5;
+    animation:driftGradient 24s ease-in-out infinite alternate;
+  }
+  @keyframes driftGradient{
+    0%{transform:translate(-2%,-2%) scale(1);}
+    100%{transform:translate(2%,2%) scale(1.08);}
+  }
+  .hero-grain{
+    position:absolute; inset:0; z-index:5; opacity:0.1; mix-blend-mode:overlay; pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .hero-top-row{position:relative; z-index:4; display:flex; justify-content:space-between; align-items:flex-start;}
+  .rec-badge{
+    display:flex; align-items:center; gap:8px;
+    font-family:'JetBrains Mono', monospace; font-size:0.72rem; letter-spacing:0.1em;
+    border:1px solid var(--line); border-radius:100px; padding:8px 14px;
+    backdrop-filter:blur(6px);
+  }
+  .rec-dot{width:8px; height:8px; border-radius:50%; background:var(--rust); animation:blink 1.4s infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+  .unmute-btn{
+    font-family:'JetBrains Mono', monospace; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;
+    border:1px solid var(--line); border-radius:100px; padding:8px 16px;
+    background:rgba(12,19,14,0.5); backdrop-filter:blur(6px);
+    cursor:pointer; color:var(--ink);
+  }
+  .unmute-btn:hover{border-color:var(--amber); color:var(--amber);}
+
+  /* ✏️ KHUNG TV GLITCH — khối trang trí trung tâm hero.
+     Đây là chỗ ẩn dụ "màn hình cổ" thay cho ảnh TV thật trong bản gốc.
+     Muốn thay bằng ẢNH hoặc VIDEO thật: xoá nội dung bên trong
+     .tv-screen (đoạn có class "tv-glitch") và thay bằng
+     <img src="..."> hoặc <video autoplay muted loop playsinline>
+     giữ nguyên kích thước khung cha .tv-mock. */
+  .tv-mock{
+    position:absolute; z-index:2; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    width:min(46vw, 420px); aspect-ratio:4/3.4;
+    background:#1a1410; border-radius:16px;
+    border:10px solid #1a1410;
+    box-shadow:0 40px 90px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(241,234,217,0.08);
+  }
+  .tv-screen{
+    position:relative; width:100%; height:100%; border-radius:6px; overflow:hidden;
+    background:#050705;
+  }
+  .tv-glitch{
+    position:absolute; inset:0;
+    background:linear-gradient(120deg, var(--moss), var(--amber) 40%, var(--rust) 70%, var(--moss));
+    background-size:300% 300%;
+    animation:glitchShift 6s ease-in-out infinite;
+    opacity:0.85;
+  }
+  @keyframes glitchShift{
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+  }
+  .tv-scanlines{
+    position:absolute; inset:0;
+    background:repeating-linear-gradient(180deg, rgba(0,0,0,0.35) 0px, rgba(0,0,0,0.35) 1px, transparent 2px, transparent 4px);
+    mix-blend-mode:multiply;
+  }
+  .tv-label{
+    position:absolute; bottom:10px; left:12px; z-index:2;
+    font-family:'JetBrains Mono', monospace; font-size:0.6rem; letter-spacing:0.1em;
+    color:rgba(241,234,217,0.7); text-transform:uppercase;
+  }
+
+  .hero-title-wrap{position:relative; z-index:3; text-align:center; pointer-events:none;}
+  /* ✏️ hiệu ứng "giấy cũ / trầy xước" cho chữ: nhiều lớp text-shadow lệch nhẹ */
+  #hero h1{
+    font-family:'Anton', sans-serif; font-weight:400;
+    font-size:clamp(3.4rem, 13vw, 10rem);
+    letter-spacing:0.01em; text-transform:uppercase; line-height:0.86;
+    color:var(--ink);
+    text-shadow:
+      2px 0 0 rgba(12,19,14,0.4),
+      -2px 1px 0 rgba(231,196,103,0.15),
+      0 3px 18px rgba(0,0,0,0.5);
+  }
+
+  .hero-bottom-row{
+    position:relative; z-index:4;
+    display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap:wrap;
+  }
+  .hero-name{font-family:'Anton', sans-serif; font-weight:400; font-size:clamp(1.4rem,3vw,2.1rem); text-transform:uppercase;}
+  .hero-role{font-family:'Anton', sans-serif; font-weight:400; font-size:clamp(1.1rem,2.4vw,1.6rem); text-transform:uppercase; color:var(--amber); letter-spacing:0.04em;}
+
+  /* =====================================================================
+     PHẦN 2 — INFO: 3 cột (giới thiệu | liên hệ+học vấn+công cụ | kinh nghiệm+sở thích)
+     ===================================================================== */
+  #info{background:var(--bg-panel); padding:100px 5vw; position:relative;}
+  .info-grid{display:grid; grid-template-columns:1.1fr 1fr 1.2fr; gap:56px;}
+
+  .info-block h2{
+    font-family:'Anton', sans-serif; font-weight:400; text-transform:uppercase;
+    font-size:1.5rem; margin-bottom:16px; letter-spacing:0.01em;
+  }
+  .info-block h3{
+    font-family:'Anton', sans-serif; font-weight:400; text-transform:uppercase;
+    font-size:1.1rem; margin:26px 0 12px; color:var(--amber);
+  }
+  .info-block p{color:var(--ink-dim); font-size:0.98rem; line-height:1.7;}
+
+  .about-photo{
+    margin-top:24px; aspect-ratio:3/4; max-width:280px; border-radius:6px; overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .about-photo img{width:100%; height:100%; object-fit:cover; filter:saturate(1.05) contrast(1.05);}
+
+  .contact-list{list-style:none; display:flex; flex-direction:column; gap:10px;}
+  .contact-list li{display:flex; gap:10px; align-items:center; color:var(--ink-dim); font-size:0.95rem;}
+  .contact-list .ic{color:var(--amber); font-family:'JetBrains Mono', monospace; font-size:0.85rem;}
+
+  .tools-row{display:flex; gap:10px; flex-wrap:wrap;}
+  /* ✏️ TOOL BADGE — mỗi badge giờ là một LINK (<a>) bấm được, có màu
+     riêng theo từng công cụ. Đổi href="..." trong HTML bên dưới để
+     dẫn tới trang cá nhân/portfolio tương ứng của bạn (ví dụ trang
+     Behance riêng cho mảng dựng phim, hoặc mục lọc theo công cụ). */
+  .tool-badge{
+    width:44px; height:44px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace; font-size:0.72rem; font-weight:700;
+    color:#fff;
+    border:1px solid rgba(255,255,255,0.12);
+    text-decoration:none;
+    transition:transform .2s ease, box-shadow .2s ease;
+  }
+  .tool-badge:hover{transform:translateY(-3px); box-shadow:0 10px 22px rgba(0,0,0,0.35);}
+  /* ✏️ Đổi mã màu ở đây nếu muốn tông màu khác cho từng app */
+  .tool-ps{background:linear-gradient(160deg, #001E36, #31A8FF);}
+  .tool-pr{background:linear-gradient(160deg, #00005B, #9999FF);}
+  .tool-ae{background:linear-gradient(160deg, #00005B, #9999FF); filter:hue-rotate(-14deg);}
+  .tool-cc{background:linear-gradient(160deg, #101010, #3a3a3a); font-size:1rem;}
+  .tool-cam{background:linear-gradient(160deg, #202a22, #5c7a52); font-size:1rem;}
+
+  .timeline{list-style:none; display:flex; flex-direction:column; gap:26px; position:relative;}
+  .timeline::before{
+    content:''; position:absolute; left:52px; top:6px; bottom:6px; width:1px; background:var(--line);
+  }
+  .tl-item{display:grid; grid-template-columns:44px 16px 1fr; gap:10px; align-items:start;}
+  .tl-year{font-family:'JetBrains Mono', monospace; font-size:0.7rem; color:var(--ink-dim); text-align:right; padding-top:3px;}
+  .tl-dot{width:10px; height:10px; border-radius:50%; background:var(--amber); margin-top:5px; justify-self:center;}
+  .tl-content h4{font-family:'Anton', sans-serif; font-weight:400; text-transform:uppercase; font-size:1rem;}
+  .tl-content .role{font-size:0.85rem; color:var(--amber); margin:2px 0 6px; font-family:'JetBrains Mono', monospace; text-transform:uppercase; letter-spacing:0.02em;}
+  .tl-content p{color:var(--ink-dim); font-size:0.9rem; line-height:1.6;}
+
+  .hobby-tags{display:flex; gap:10px; flex-wrap:wrap;}
+  .hobby-tags span{
+    font-family:'JetBrains Mono', monospace; font-size:0.72rem; letter-spacing:0.06em; text-transform:uppercase;
+    border:1px solid var(--line); border-radius:100px; padding:8px 14px; color:var(--ink-dim);
+  }
+
+  @media (max-width:980px){
+    .info-grid{grid-template-columns:1fr; gap:70px;}
+  }
+
+  /* ---------- SECTION HEAD (dùng cho video & gallery) ---------- */
+  .section{padding:130px 5vw;}
+  .section-head{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    margin-bottom:52px; gap:24px; flex-wrap:wrap;
+    border-bottom:1px solid var(--line); padding-bottom:26px;
+  }
+  .section-head h2{
+    font-family:'Anton', sans-serif; font-weight:400;
+    font-size:clamp(1.9rem, 5vw, 3.2rem); text-transform:uppercase;
+  }
+
+  /* =====================================================================
+     PHẦN 3 — VIDEO (3 video)
+     ===================================================================== */
+  .video-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:26px;}
+  .video-card{display:flex; flex-direction:column; gap:14px;}
+  .video-frame{position:relative; aspect-ratio:9/16; border-radius:6px; overflow:hidden; background:var(--bg-panel); border:1px solid var(--line);}
+  .video-frame video{width:100%; height:100%; object-fit:cover;}
+  .video-idx{
+    position:absolute; top:14px; left:14px; z-index:2;
+    font-family:'JetBrains Mono', monospace; font-size:0.7rem; color:var(--ink-dim);
+    background:rgba(12,19,14,0.75); padding:4px 10px; border-radius:100px;
+  }
+  .video-card h3{font-family:'Anton', sans-serif; font-weight:400; text-transform:uppercase; font-size:1.1rem;}
+  .video-card p{color:var(--ink-dim); font-size:0.9rem; line-height:1.5;}
+  @media (max-width:900px){.video-grid{grid-template-columns:1fr; max-width:420px; margin:0 auto;}}
+
+  /* =====================================================================
+     PHẦN 4 — GALLERY
+     ===================================================================== */
+  #gallery{background:var(--bg-panel);}
+  .work-grid{display:grid; grid-template-columns:repeat(6, 1fr); gap:2px;}
+  .work-item{position:relative; overflow:hidden; grid-column:span 3; aspect-ratio:1/1;}
+  .work-item.wide{grid-column:span 6; aspect-ratio:16/8;}
+  .work-item img{width:100%; height:100%; object-fit:cover; transition:transform .6s ease;}
+  .work-item:hover img{transform:scale(1.06);}
+  .work-overlay{position:absolute; inset:0; background:linear-gradient(180deg, transparent 40%, rgba(12,19,14,0.94)); display:flex; flex-direction:column; justify-content:flex-end; padding:20px;}
+  .work-overlay .eyebrow{color:var(--amber);}
+  .work-overlay h3{font-family:'Anton', sans-serif; font-weight:400; text-transform:uppercase; font-size:1.2rem; margin-top:6px;}
+  @media (max-width:720px){.work-item{grid-column:span 6;}}
+
+  /* =====================================================================
+     PHẦN 5 — OUTRO
+     ===================================================================== */
+  #outro{padding:130px 5vw 60px; text-align:center;}
+  #outro h2{font-family:'Anton', sans-serif; font-weight:400; text-transform:uppercase; font-size:clamp(2.2rem, 7vw, 5rem); line-height:0.95;}
+  .outro-note{max-width:520px; margin:24px auto 0; color:var(--ink-dim); font-size:1rem; line-height:1.7;}
+  .outro-cta{
+    display:inline-block; margin-top:34px; font-family:'JetBrains Mono', monospace;
+    font-size:0.82rem; letter-spacing:0.08em; text-transform:uppercase;
+    border:1px solid var(--line); border-radius:100px; padding:13px 28px;
+  }
+  .outro-cta:hover{border-color:var(--amber); color:var(--amber);}
+  .footer-row{margin-top:80px; padding-top:26px; border-top:1px solid var(--line); display:flex; justify-content:center; gap:22px; flex-wrap:wrap;}
+  .footer-links a{font-family:'JetBrains Mono', monospace; font-size:0.76rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-dim);}
+  .footer-links a:hover{color:var(--ink);}
+  .footer-note{margin-top:18px; font-family:'JetBrains Mono', monospace; font-size:0.68rem; color:var(--ink-dim);}
+
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    .hero-bg, .tv-glitch, .rec-dot{animation:none;}
+    .work-item img{transition:none;}
+  }
+  a:focus-visible, button:focus-visible{outline:2px solid var(--amber); outline-offset:3px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">QUỐC HUY</div>
+  <nav>
+    <a href="#info">Giới thiệu</a>
+    <a href="#videos">Video</a>
+    <a href="#gallery">Ảnh</a>
+  </nav>
+</header>
+
+<!-- =====================================================================
+     PHẦN 1 — HERO
+     ===================================================================== -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grain"></div>
+
+  <div class="hero-top-row">
+    <div class="rec-badge"><span class="rec-dot"></span> REC</div>
+    <!-- Nút mang tính trang trí, xem ghi chú "VIDEO NỀN" ở đầu file nếu muốn nối với video thật -->
+    <button class="unmute-btn" id="unmuteBtn">Unmute</button>
+  </div>
+
+  <!-- ✏️ Khung TV glitch trang trí — xem hướng dẫn thay bằng ảnh/video thật ở phần ghi chú CSS ".tv-mock" phía trên -->
+  <div class="tv-mock">
+    <div class="tv-screen">
+      <div class="tv-glitch"></div>
+      <div class="tv-scanlines"></div>
+      <span class="tv-label">CH. 03 — REEL</span>
+    </div>
+  </div>
+
+  <div class="hero-title-wrap">
+    <!-- ✏️ THAY THẾ: tiêu đề chính (giữ ngắn gọn để hiệu ứng poster đẹp) -->
+    <h1>PORTFOLIO</h1>
+  </div>
+
+  <div class="hero-bottom-row">
+    <!-- ✏️ THAY THẾ: tên bạn -->
+    <div class="hero-name">Quốc Huy</div>
+    <!-- ✏️ THAY THẾ: chức danh -->
+    <div class="hero-role">Media Editor</div>
+  </div>
+</section>
+
+<!-- =====================================================================
+     PHẦN 2 — INFO (3 cột)
+     ===================================================================== -->
+<section id="info">
+  <div class="info-grid">
+
+    <!-- Cột 1: Giới thiệu + ảnh -->
+    <div class="info-block">
+      <p class="eyebrow">Về tôi</p>
+      <h2 style="margin-top:10px;">About Me</h2>
+      <!-- ✏️ THAY THẾ: đoạn giới thiệu bản thân -->
+      <p>Hey there, I'm Huy. I'm a videographer and video editor. I love producing high-quality and polished videos from scratch. I never stop learning new skills, and as an adaptable person, I'm built to step up, not step back.</p>
+      <!-- ✏️ THAY THẾ ẢNH: đổi src thành ảnh chân dung thật của bạn -->
+      <div class="about-photo">
+        <img src="https://picsum.photos/seed/quochuy/600/800" alt="Chân dung Quốc Huy">
+      </div>
+    </div>
+
+    <!-- Cột 2: Liên hệ + Học vấn + Công cụ -->
+    <div class="info-block">
+      <p class="eyebrow">Thông tin</p>
+      <h2 style="margin-top:10px;">Contact</h2>
+      <!-- ✏️ THAY THẾ: thông tin liên hệ -->
+      <ul class="contact-list">
+        <li><span class="ic">☎</span> +84 358 736 598</li>
+        <li><span class="ic">⚲</span> Ho Chi Minh City</li>
+        <li><span class="ic">✉</span> cunn230902@gmail.com</li>
+      </ul>
+
+      <h3>Education</h3>
+      <!-- ✏️ THAY THẾ: học vấn -->
+      <p><strong>Multimedia communications industry</strong><br>Nguyen Tat Thanh University</p>
+
+      <h3>Tools</h3>
+      <!-- ✏️ THAY THẾ href="#" của mỗi badge bằng link thật (trang cá
+           nhân, Behance, mạng xã hội, hoặc portfolio lọc theo công cụ).
+           target="_blank" đã có sẵn nên link sẽ mở tab mới. -->
+      <div class="tools-row">
+        <a class="tool-badge tool-ps" href="#" target="_blank" rel="noopener" aria-label="Photoshop">Ps</a>
+        <a class="tool-badge tool-pr" href="#" target="_blank" rel="noopener" aria-label="Premiere Pro">Pr</a>
+        <a class="tool-badge tool-ae" href="#" target="_blank" rel="noopener" aria-label="After Effects">Ae</a>
+        <a class="tool-badge tool-cc" href="#" target="_blank" rel="noopener" aria-label="CapCut">✂</a>
+        <a class="tool-badge tool-cam" href="#" target="_blank" rel="noopener" aria-label="Ảnh / Máy quay">📷</a>
+      </div>
+    </div>
+
+    <!-- Cột 3: Kinh nghiệm + Sở thích -->
+    <div class="info-block">
+      <p class="eyebrow">Quá trình</p>
+      <h2 style="margin-top:10px;">Experience</h2>
+      <!-- ✏️ THAY THẾ / thêm bớt: mỗi .tl-item là một mốc kinh nghiệm.
+           Copy nguyên khối để thêm mốc mới. -->
+      <ul class="timeline">
+        <li class="tl-item">
+          <span class="tl-year">2024</span>
+          <span class="tl-dot"></span>
+          <div class="tl-content">
+            <h4>Freelance</h4>
+            <p>Video editing</p>
+          </div>
+        </li>
+        <li class="tl-item">
+          <span class="tl-year">2024–2025</span>
+          <span class="tl-dot"></span>
+          <div class="tl-content">
+            <h4>Soha Vista</h4>
+            <p class="role">Position — Video editor</p>
+            <p>Content editor, media editor, reportage, reportage filming make for (VTV9, …)</p>
+          </div>
+        </li>
+        <li class="tl-item">
+          <span class="tl-year">2025–Now</span>
+          <span class="tl-dot"></span>
+          <div class="tl-content">
+            <h4>International Minh Viet JSC</h4>
+            <p class="role">Position — Media production assistant</p>
+            <p>Multitasking, Editor, Motion Design, Videographer, content creation</p>
+          </div>
+        </li>
+      </ul>
+
+      <h3>Hobby</h3>
+      <!-- ✏️ THAY THẾ: sở thích của bạn (ảnh gốc bị cắt ở phần này nên mình để chỗ trống) -->
+      <div class="hobby-tags">
+        <span>Photography</span>
+        <span>Travel</span>
+        <span>Music</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- =====================================================================
+     PHẦN 3 — VIDEO (3 video)
+     ===================================================================== -->
+<section id="videos" class="section">
+  <div class="section-head">
+    <h2>Video</h2>
+    <p class="eyebrow">03 video nổi bật</p>
+  </div>
+  <div class="video-grid">
+    <div class="video-card">
+      <div class="video-frame">
+        <span class="video-idx">01</span>
+        <!-- ✏️ THAY THẾ: đường dẫn video thật -->
+        <video controls preload="metadata" poster="https://picsum.photos/seed/vid1/600/1000">
+          <source src="video/video-1.mp4" type="video/mp4">
+        </video>
+      </div>
+      <h3>VTV9 — Reportage</h3>
+      <p>Phóng sự truyền hình, quay dựng và dựng hậu kỳ.</p>
+    </div>
+    <div class="video-card">
+      <div class="video-frame">
+        <span class="video-idx">02</span>
+        <!-- ✏️ THAY THẾ -->
+        <video controls preload="metadata" poster="https://picsum.photos/seed/vid2/600/1000">
+          <source src="video/video-2.mp4" type="video/mp4">
+        </video>
+      </div>
+      <h3>Corporate Highlight</h3>
+      <p>Video sự kiện doanh nghiệp, dựng theo nhịp nhanh.</p>
+    </div>
+    <div class="video-card">
+      <div class="video-frame">
+        <span class="video-idx">03</span>
+        <!-- ✏️ THAY THẾ -->
+        <video controls preload="metadata" poster="https://picsum.photos/seed/vid3/600/1000">
+          <source src="video/video-3.mp4" type="video/mp4">
+        </video>
+      </div>
+      <h3>Motion Design Reel</h3>
+      <p>Tổng hợp các đoạn motion graphic đã thực hiện.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================================
+     PHẦN 4 — GALLERY
+     ===================================================================== -->
+<section id="gallery" class="section">
+  <div class="section-head">
+    <h2>Hình ảnh</h2>
+    <p class="eyebrow">Bộ sưu tập ảnh chọn lọc</p>
+  </div>
+  <div class="work-grid">
+    <div class="work-item wide">
+      <img src="https://picsum.photos/seed/huywork01/1400/700" alt="Ảnh nổi bật">
+      <div class="work-overlay"><span class="eyebrow">Media</span><h3>Behind The Scenes</h3></div>
+    </div>
+    <div class="work-item">
+      <img src="https://picsum.photos/seed/huywork02/800/800" alt="Ảnh 2">
+      <div class="work-overlay"><span class="eyebrow">Reportage</span><h3>VTV9 Field Shoot</h3></div>
+    </div>
+    <div class="work-item">
+      <img src="https://picsum.photos/seed/huywork03/800/800" alt="Ảnh 3">
+      <div class="work-overlay"><span class="eyebrow">Event</span><h3>Corporate Launch</h3></div>
+    </div>
+    <div class="work-item">
+      <img src="https://picsum.photos/seed/huywork04/800/800" alt="Ảnh 4">
+      <div class="work-overlay"><span class="eyebrow">Editing</span><h3>Post-production</h3></div>
+    </div>
+    <div class="work-item">
+      <img src="https://picsum.photos/seed/huywork05/800/800" alt="Ảnh 5">
+      <div class="work-overlay"><span class="eyebrow">Personal</span><h3>Travel Log</h3></div>
+    </div>
+  </div>
+</section>
+
+<!-- =====================================================================
+     PHẦN 5 — OUTRO
+     ===================================================================== -->
+<section id="outro">
+  <p class="eyebrow">Cảm ơn bạn đã ghé thăm</p>
+  <h2>Cảm ơn vì đã<br><span class="amber-text">xem hết portfolio này</span></h2>
+  <p class="outro-note">Nếu bạn cần một người kể chuyện bằng hình ảnh và video, mình luôn sẵn sàng cho dự án tiếp theo.</p>
+  <a class="outro-cta" href="mailto:cunn230902@gmail.com">Liên hệ hợp tác →</a>
+  <div class="footer-row">
+    <div class="footer-links">
+      <a href="mailto:cunn230902@gmail.com">Email</a>
+      <a href="tel:+84358736598">Điện thoại</a>
+      <!-- ✏️ THAY THẾ: link mạng xã hội -->
+      <a href="#">Instagram</a>
+      <a href="#">Behance</a>
+    </div>
+  </div>
+  <p class="footer-note">© 2026 Quốc Huy. Ho Chi Minh City, Vietnam.</p>
+</section>
+
+<script>
+  // Nút "Unmute" — hiện chỉ đổi trạng thái hiển thị (trang trí, vì hero
+  // chưa có video nền thật). Nếu bạn thêm <video id="heroVideo"> vào
+  // hero, bỏ comment đoạn dưới để nút thật sự bật/tắt tiếng video đó.
+  const unmuteBtn = document.getElementById('unmuteBtn');
+  let muted = true;
+  unmuteBtn.addEventListener('click', () => {
+    muted = !muted;
+    unmuteBtn.textContent = muted ? 'Unmute' : 'Mute';
+    // const heroVideo = document.getElementById('heroVideo');
+    // if (heroVideo) heroVideo.muted = muted;
+  });
+</script>
+
+</body>
+</html>
